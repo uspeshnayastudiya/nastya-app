@@ -20,6 +20,9 @@ def rows(name):
 
 
 def s(v):
+    # Телефон, записанный в ячейку числом, приходит как 7071234556.0: «.0» дало бы лишнюю цифру.
+    if isinstance(v, float) and v.is_integer():
+        v = int(v)
     return str(v).strip() if v not in (None, '') else ''
 
 
@@ -92,8 +95,13 @@ for r in rows('Замеры'):
     m = {'full_name': name, 'date': date(r.get('Дата')), 'comment': s(r.get('Комментарий')) or None}
     for k, f in FIELDS.items():
         m[f] = num(r.get(k))
-    if any(m[f] is not None for f in FIELDS.values()) or m['comment']:
+    if any(m[f] is not None for f in FIELDS.values()):
         measures.append(m)
+    elif m['comment']:
+        # Строка без цифр - это не замер, а заметка Насти: переносим её в заметку клиентки.
+        c = next(c for c in clients if c['full_name'] == name)
+        line = f'Замеры {m["date"][8:10]}.{m["date"][5:7]}: {m["comment"]}'
+        c['note'] = f'{c["note"]}\n{line}' if c['note'] else line
 
 json.dump({'clients': clients, 'measurements': measures}, open(out, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
 print(f'clients={len(clients)} measurements={len(measures)}')

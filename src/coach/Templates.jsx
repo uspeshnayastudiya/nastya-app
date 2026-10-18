@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'preact/hooks';
 import { applyWeekTemplate, cacheGet, coachClients, deleteTemplate, exerciseNames, fromTemplate, lastWeights, saveTemplate, saveWorkout, templates, usageCounts, weekPlan } from '../lib/api.js';
-import { addDays, today, weekStart } from '../lib/dates.js';
+import { addDays, plural, today, weekStart } from '../lib/dates.js';
 import { schemeText } from '../lib/logic.js';
 import { Back, Btn, errorText, Field, go, Hud, LoadError, Loading, Seg, Sheet, toast, Udar, useLoad } from '../ui/kit.jsx';
 import { ExerciseSheet } from './ExerciseSheet.jsx';
@@ -19,8 +19,12 @@ export function Templates() {
   const list = tab === 'day' ? days : weeks;
   const meta = (tpl) => {
     const used = data.usage[tpl.name];
-    const base = tpl.kind === 'day' ? `${(tpl.exercises || []).length} УПРАЖНЕНИЯ` : `${(tpl.days || []).length} ТРЕНИРОВКИ // НА ОБЫЧНЫЕ ДНИ`;
-    return used ? `${base} // У ${used} КЛИЕНТОК` : base;
+    const ne = (tpl.exercises || []).length;
+    const nd = (tpl.days || []).length;
+    const base = tpl.kind === 'day'
+      ? `${ne} ${plural(ne, 'УПРАЖНЕНИЕ', 'УПРАЖНЕНИЯ', 'УПРАЖНЕНИЙ')}`
+      : `${nd} ${plural(nd, 'ТРЕНИРОВКА', 'ТРЕНИРОВКИ', 'ТРЕНИРОВОК')} // НА ОБЫЧНЫЕ ДНИ`;
+    return used ? `${base} // У ${used} ${plural(used, 'КЛИЕНТКИ', 'КЛИЕНТОК', 'КЛИЕНТОК')}` : base;
   };
   const preview = (tpl) =>
     tpl.kind === 'day'

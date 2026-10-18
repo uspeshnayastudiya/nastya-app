@@ -1,5 +1,5 @@
 import { coachShift } from '../lib/api.js';
-import { today, ddmm, WD, weekday } from '../lib/dates.js';
+import { today, ddmm, plural, WD, weekday } from '../lib/dates.js';
 import { flagsFor, isUsualDay, payText, quietText, waLink } from '../lib/logic.js';
 import { Hud, Icon, LoadError, Loading, Offline, useLoad } from '../ui/kit.jsx';
 
@@ -42,7 +42,7 @@ export function Shift({ me }) {
             <Icon name="person" size={20} />
           </a>
         </div>
-        <Hud>{`ТРЕНЕР // ${WD[weekday(t)]} ${ddmm(t)} // ${data.clients.length} КЛИЕНТОК`}</Hud>
+        <Hud>{`ТРЕНЕР // ${WD[weekday(t)]} ${ddmm(t)} // ${data.clients.length} ${plural(data.clients.length, 'КЛИЕНТКА', 'КЛИЕНТКИ', 'КЛИЕНТОК')}`}</Hud>
       </header>
 
       <section aria-labelledby="att-t" class="stack">

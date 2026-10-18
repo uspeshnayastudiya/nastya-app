@@ -164,7 +164,7 @@ function CycleCard({ me, days, onSettings }) {
       <h2 id="c-t" class="hud" style={{ margin: 0 }}>
         <span class="tag">[ЦИКЛ] </span>
         {monthName(t).toUpperCase()}
-        {info.known && !me.contraception ? ` // СРЕДНИЙ ${info.avg} ДНЕЙ` : ''}
+        {info.known && !me.contraception ? ` // СРЕДНИЙ ${info.avg} ${plural(info.avg, 'ДЕНЬ', 'ДНЯ', 'ДНЕЙ')}` : ''}
       </h2>
       <div class="hud grid7 center">{WD.map((w) => <span>{w}</span>)}</div>
       <div class="cal">
