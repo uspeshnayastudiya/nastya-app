@@ -1,0 +1,14 @@
+node_modules
+dist
+.env.local
+.env.*.local
+supabase/.temp
+supabase/.branches
+test-results
+playwright-report
+*.log
+backup-repo
+
+# служебное, только локально
+CLAUDE.md
+setup-accounts.ps1
