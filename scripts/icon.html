@@ -1,0 +1,34 @@
+<!doctype html>
+<!-- Иконка приложения: «А» Ударом в уголках видоискателя, Огонёк и Свет на Ночи.
+     Рисуется на 1024 и масштабируется через zoom; ?mask=1 - версия для Android с запасом под круг. -->
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../public/fonts/fonts.css">
+<style>
+  body { margin: 0; }
+  .icon { width: 1024px; height: 1024px; position: relative; overflow: hidden; background: #0a0a0a;
+    display: flex; align-items: center; justify-content: center; }
+  .ugol { position: absolute; width: var(--arm); height: var(--arm); border: 0 solid #ff2a00; }
+  .a { font-family: 'Sofia Sans Extra Condensed'; font-weight: 900; line-height: 1; color: #fff;
+    font-size: var(--font); margin-top: calc(var(--font) * 0.094); }
+</style>
+</head>
+<body>
+<div class="icon" id="icon">
+  <div class="ugol" style="top: var(--in); left: var(--in); border-top-width: var(--w); border-left-width: var(--w)"></div>
+  <div class="ugol" style="top: var(--in); right: var(--in); border-top-width: var(--w); border-right-width: var(--w)"></div>
+  <div class="ugol" style="bottom: var(--in); left: var(--in); border-bottom-width: var(--w); border-left-width: var(--w)"></div>
+  <div class="ugol" style="bottom: var(--in); right: var(--in); border-bottom-width: var(--w); border-right-width: var(--w)"></div>
+  <span class="a">А</span>
+</div>
+<script>
+  const q = new URLSearchParams(location.search);
+  // Обычная: уголки в 150 px от края. Для Android вершины уголков внутри безопасного круга (радиус 40%).
+  const v = q.get('mask') ? { in: 240, arm: 165, w: 42, font: 450 } : { in: 150, arm: 230, w: 56, font: 640 };
+  const s = document.getElementById('icon').style;
+  for (const [k, val] of Object.entries(v)) s.setProperty('--' + k, val + 'px');
+  document.getElementById('icon').style.zoom = (Number(q.get('size')) || 1024) / 1024;
+</script>
+</body>
+</html>
