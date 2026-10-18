@@ -85,7 +85,7 @@ test('Настя ставит норму и расписывает тренир�
   await p.getByRole('button', { name: 'Сохранить' }).click();
   await expect(p.getByText('Норма сохранена.')).toBeVisible();
   await p.getByRole('link', { name: 'Программа' }).click();
-  await p.getByRole('button', { name: 'Из шаблона' }).first().click();
+  await p.getByRole('button', { name: 'Из шаблона', exact: true }).click();
   await p.getByRole('button', { name: /Ноги\. Новичок/ }).click();
   await expect(p.getByText('Присед со штангой')).toBeVisible();
   await p.getByRole('button', { name: 'Сохранить' }).click();

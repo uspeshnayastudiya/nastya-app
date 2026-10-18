@@ -88,7 +88,7 @@ export function Today({ me, queued }) {
         <div class="shtrih" />
         {current ? (
           <>
-            <Hud tag="ТРЕНИРОВКА">
+            <Hud tag="ТРЕНИРОВКА" style={{ paddingRight: '84px' }}>
               {[current.time, 'WORKOUT GYM'].filter(Boolean).join(' // ')}
               {!isToday ? ` // ${WD[weekday(current.date)]} ${ddmm(current.date)}` : ''}
             </Hud>

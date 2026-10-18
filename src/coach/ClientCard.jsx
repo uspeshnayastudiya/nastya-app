@@ -135,7 +135,9 @@ export function ClientCard({ id }) {
           <button class="hud hud-btn" onClick={() => setNorm(true)}>ИЗМЕНИТЬ</button>
         </div>
         {c.food_enabled === false && <Hud style={{ color: 'var(--ogonek)' }}>РАЗДЕЛ ПИТАНИЯ У КЛИЕНТКИ ВЫКЛЮЧЕН</Hud>}
-        <span>{n.kcal ? `${money(n.kcal)} ккал · Б ${n.p} · Ж ${n.f} · У ${n.c}${n.train_c ? ` · +${n.train_c} г углеводов в день тренировки` : ''}` : 'Норма не задана. Без неё у клиентки нет меню.'}</span>
+        {(n.kcal || c.food_enabled !== false) && (
+          <span>{n.kcal ? `${money(n.kcal)} ккал · Б ${n.p} · Ж ${n.f} · У ${n.c}${n.train_c ? ` · +${n.train_c} г углеводов в день тренировки` : ''}` : 'Норма не задана. Без неё у клиентки нет меню.'}</span>
+        )}
         {data.foodDays.length > 0 && (
           <Hud>{`ЗА НЕДЕЛЮ: ПО ПЛАНУ ${data.foodDays.filter((d) => d.status === 'plan').length} // ОТКЛОНИЛАСЬ ${data.foodDays.filter((d) => d.status === 'off').length}`}</Hud>
         )}

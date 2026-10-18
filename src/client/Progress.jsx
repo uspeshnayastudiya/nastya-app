@@ -25,8 +25,10 @@ export function Progress({ me, onMe }) {
 
   const series = liftSeries(data.exercises, data.logs).slice(0, 5);
   const s = series[Math.min(sel, series.length - 1)];
-  const weeks = Math.max(1, Math.round(diffDays(today(), me.created_at.slice(0, 10)) / 7));
   const ms = data.measurements;
+  // У перенесённых из таблицы клиенток замеры старше аккаунта: считаем от самого раннего.
+  const start = [me.created_at.slice(0, 10), ms[0]?.date].filter(Boolean).sort()[0];
+  const weeks = Math.max(1, Math.round(diffDays(today(), start) / 7));
   const firstM = ms[0];
   const lastM = ms[ms.length - 1];
   const nextM = lastM ? addDays(lastM.date, 30) : null;
@@ -86,7 +88,7 @@ export function Progress({ me, onMe }) {
         <Btn kind="dark" small onClick={() => setMeasure(true)}>Внести замеры</Btn>
       </section>
 
-      {me.cycle_enabled ? (
+      {me.is_minor && !me.cycle_enabled ? null : me.cycle_enabled ? (
         <CycleCard me={me} days={data.cycle} onSettings={() => setCycleSet(true)} />
       ) : (
         <section class="outline">

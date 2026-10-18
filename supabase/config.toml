@@ -1,0 +1,8 @@
+# Только то, что отличается от настроек проекта по умолчанию.
+# Остальное config push не трогает.
+project_id = "anastasia-app"
+
+[auth]
+site_url = "https://uspeshnayastudiya.github.io/nastya-app/"
+# Аккаунты создаёт только Настя через функцию admin.
+enable_signup = false

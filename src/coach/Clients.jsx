@@ -1,6 +1,6 @@
 import { useState } from 'preact/hooks';
 import { coachClients, markPaid } from '../lib/api.js';
-import { ddmm, diffDays, relDays, today } from '../lib/dates.js';
+import { ddmm, diffDays, plural, relDays, today } from '../lib/dates.js';
 import { money, payText, waLink } from '../lib/logic.js';
 import { Btn, Hud, LoadError, Loading, Offline, toast, Udar, useLoad } from '../ui/kit.jsx';
 
@@ -37,7 +37,11 @@ export function Clients() {
       <Offline stale={stale} />
       <header class="stack">
         <Udar size={52} as="h1">Клиентки</Udar>
-        <Hud>{`${active.length} АКТИВНЫХ // ${nPersonal} ПЕРСОНАЛЬНЫХ // ${active.length - nPersonal} ГРУППОВЫХ`}</Hud>
+        <Hud>
+          {`${active.length} ${plural(active.length, 'АКТИВНАЯ', 'АКТИВНЫЕ', 'АКТИВНЫХ')} // ` +
+            `${nPersonal} ${plural(nPersonal, 'ПЕРСОНАЛЬНАЯ', 'ПЕРСОНАЛЬНЫЕ', 'ПЕРСОНАЛЬНЫХ')} // ` +
+            `${active.length - nPersonal} ${plural(active.length - nPersonal, 'ГРУППОВАЯ', 'ГРУППОВЫЕ', 'ГРУППОВЫХ')}`}
+        </Hud>
       </header>
       <Btn kind="light" href="#/clients/new" icon="plus">Добавить клиентку</Btn>
 
