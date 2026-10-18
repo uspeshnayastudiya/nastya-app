@@ -1,6 +1,6 @@
 import { useState } from 'preact/hooks';
-import { coachClients, markPaid } from '../lib/api.js';
-import { ddmm, diffDays, plural, relDays, today } from '../lib/dates.js';
+import { coachClients, coachPayments, markPaid } from '../lib/api.js';
+import { addDays, ddmm, diffDays, monthName, plural, relDays, today } from '../lib/dates.js';
 import { money, payText, waLink } from '../lib/logic.js';
 import { Btn, Hud, LoadError, Loading, Offline, toast, Udar, useLoad } from '../ui/kit.jsx';
 
@@ -9,6 +9,10 @@ export const TARIFF = { group: 'ГРУППОВАЯ', personal: 'ПЕРСОНАЛ
 export function Clients() {
   const t = today();
   const { data, setData, loading, stale, reload } = useLoad('clients', () => coachClients(), []);
+  const monthStart = t.slice(0, 8) + '01';
+  const prevStart = addDays(monthStart, -1).slice(0, 8) + '01';
+  const monthEnd = addDays(addDays(monthStart, 32).slice(0, 8) + '01', -1);
+  const pay = useLoad('payments', () => coachPayments(prevStart), [prevStart]);
   const [showArchive, setShowArchive] = useState(false);
   if (!data && loading) return <div class="screen"><Loading /></div>;
   if (!data) return <div class="screen"><LoadError onRetry={reload} /></div>;
@@ -21,11 +25,18 @@ export function Clients() {
   const waiting = overdue.reduce((s, c) => s + (c.price || 0), 0);
   const sorted = [...active].filter((c) => !overdue.includes(c)).sort((a, b) => (a.paid_until || '9999') < (b.paid_until || '9999') ? -1 : 1);
   const nPersonal = active.filter((c) => c.tariff === 'personal').length;
+  // Заработок: оплаты, отмеченные кнопкой «Оплатила». «Ожидаем» - просроченные и те, чья оплата кончается в этом месяце.
+  const sum = (list) => list.reduce((s, p) => s + (p.amount || 0), 0);
+  const pays = pay.data || [];
+  const thisMonth = pays.filter((p) => p.paid_at >= monthStart);
+  const prevSum = sum(pays.filter((p) => p.paid_at < monthStart));
+  const dueLeft = active.filter((c) => c.paid_until && c.paid_until <= monthEnd).reduce((s, c) => s + (c.price || 0), 0);
 
   async function paidNow(c) {
     try {
       const until = await markPaid(c.id, c.price || null);
       setData((d) => d.map((x) => (x.id === c.id ? { ...x, paid_until: until } : x)));
+      pay.reload();
       toast(`${c.full_name}: оплачено до ${ddmm(until)}`);
     } catch {
       toast('Не сохранилось. Проверь интернет.');
@@ -44,6 +55,21 @@ export function Clients() {
         </Hud>
       </header>
       <Btn kind="light" href="#/clients/new" icon="plus">Добавить клиентку</Btn>
+
+      <section aria-label="Заработок за месяц" class="card" style={{ gap: '8px' }}>
+        <Hud tag="ЗАРАБОТОК">{`${monthName(t).toUpperCase()} // ПОЛУЧЕНО`}</Hud>
+        <span class="row" style={{ alignItems: 'baseline', gap: '6px' }}>
+          <span class="udar" style={{ fontSize: '56px', lineHeight: 0.9 }}>{pay.data ? money(sum(thisMonth)) : '...'}</span>
+          <span class="small muted">₸</span>
+        </span>
+        <Hud>
+          {[
+            `${thisMonth.length} ${plural(thisMonth.length, 'ОПЛАТА', 'ОПЛАТЫ', 'ОПЛАТ')}`,
+            dueLeft ? `ДО ${ddmm(monthEnd)} ОЖИДАЕМ ЕЩЁ ${money(dueLeft)} ₸` : null,
+            prevSum ? `${monthName(prevStart).toUpperCase()}: ${money(prevSum)} ₸` : null,
+          ].filter(Boolean).join(' // ')}
+        </Hud>
+      </section>
 
       <div class="grid2">
         <div class="card tight">

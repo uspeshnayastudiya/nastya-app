@@ -364,6 +364,11 @@ export async function updateProfile(id, values) {
   return withNote(must(await supabase.from('profiles').update(rest).eq('id', id).select(WITH_NOTE).single()));
 }
 
+// Оплаты с начала прошлого месяца: заработок на экране «Клиентки».
+export async function coachPayments(from) {
+  return must(await supabase.from('payments').select('client_id, paid_at, amount').gte('paid_at', from));
+}
+
 export async function markPaid(id, amount) {
   return must(await supabase.rpc('coach_mark_paid', { p_client: id, p_amount: amount }));
 }

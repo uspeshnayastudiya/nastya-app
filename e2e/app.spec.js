@@ -162,6 +162,21 @@ test('Настя видит флажки и правку веса', async () => 
   expect(data.weight_change).toBe(null);
 });
 
+test('заработок за месяц считает отмеченные оплаты', async () => {
+  const p = coachPage;
+  await p.goto(`/#/client/${clientId}`);
+  await p.getByRole('button', { name: 'Оплатила' }).click();
+  await expect.poll(async () => (await db.from('payments').select('amount').eq('client_id', clientId)).data.length).toBe(1);
+  const d = new Date();
+  const monthStart = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`;
+  const { data: pays } = await db.from('payments').select('amount').gte('paid_at', monthStart);
+  const total = String(pays.reduce((s, x) => s + (x.amount || 0), 0)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+  await p.goto('/#/clients');
+  const card = p.getByRole('region', { name: 'Заработок за месяц' });
+  await expect(card).toContainText(total);
+  await expect(card).toContainText(/\d+ ОПЛАТ/);
+});
+
 test('заметку Насти видит только она', async () => {
   const p = coachPage;
   await p.goto(`/#/client/${clientId}/edit`);

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import { cacheGet, coachClients, createClient, deleteClientForever, updateProfile } from '../lib/api.js';
 import { WD } from '../lib/dates.js';
 import { parseNum } from '../lib/logic.js';
@@ -15,15 +15,29 @@ export function ClientForm({ id }) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
 
+  // Поля, которые Настя уже поправила: свежие данные из базы их не перезаписывают.
+  const touched = useRef(new Set());
+
   useEffect(() => {
     if (!editing) return;
     coachClients().then((list) => {
       const c = list.find((x) => x.id === id);
-      if (c) setF(toForm(c));
+      if (!c) return;
+      setF((cur) => {
+        const fresh = toForm(c);
+        for (const k of touched.current) fresh[k] = cur[k];
+        return fresh;
+      });
     }).catch(() => {});
   }, [id]);
 
-  const set = (k, v) => setF((x) => ({ ...x, [k]: v }));
+  const edit = (upd) =>
+    setF((x) => {
+      const part = typeof upd === 'function' ? upd(x) : upd;
+      for (const k of Object.keys(part)) touched.current.add(k);
+      return { ...x, ...part };
+    });
+  const set = (k, v) => edit({ [k]: v });
   const toggleDay = (d) => set('usual_days', f.usual_days.includes(d) ? f.usual_days.filter((x) => x !== d) : [...f.usual_days, d].sort());
 
   async function submit(e) {
@@ -115,7 +129,7 @@ export function ClientForm({ id }) {
         <Seg
           label="Тариф"
           value={f.tariff}
-          onChange={(v) => setF((x) => ({ ...x, tariff: v, price: String(PRICE[v]) }))}
+          onChange={(v) => edit({ tariff: v, price: String(PRICE[v]) })}
           options={[{ value: 'group', label: 'Групповая' }, { value: 'personal', label: 'Персональная' }]}
         />
       </div>
@@ -153,7 +167,7 @@ export function ClientForm({ id }) {
         <textarea id="f-note" class="input" value={f.note} onInput={(e) => set('note', e.currentTarget.value)} />
       </Field>
       <label class="check">
-        <input type="checkbox" checked={f.is_minor} onChange={(e) => setF((x) => ({ ...x, is_minor: e.currentTarget.checked, food_enabled: e.currentTarget.checked ? false : x.food_enabled }))} />
+        <input type="checkbox" checked={f.is_minor} onChange={(e) => { const on = e.currentTarget.checked; edit((x) => ({ is_minor: on, food_enabled: on ? false : x.food_enabled })); }} />
         <span>Младше 18 лет</span>
       </label>
       {f.is_minor && (
