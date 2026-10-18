@@ -116,10 +116,11 @@ test('клиентка входит, отмечается и тренирует�
   await expect.poll(async () => (await db.from('set_logs').select('reps').eq('client_id', clientId)).data.length).toBe(1);
   await expect.poll(async () => (await db.from('checkins').select('energy').eq('client_id', clientId).single()).data?.energy).toBe(0);
   await expect.poll(async () => (await db.from('cycle_days').select('flow').eq('client_id', clientId).single()).data?.flow).toBe(1);
-  const { data: ex } = await db.from('workout_exercises').select('weight, weight_change, feel').eq('client_id', clientId).eq('name', 'Присед со штангой').single();
+  const squat = async () => (await db.from('workout_exercises').select('weight, weight_change, feel').eq('client_id', clientId).eq('name', 'Присед со штангой').single()).data;
+  await expect.poll(async () => (await squat()).feel).toBe('easy');
+  const ex = await squat();
   expect(Number(ex.weight)).toBe(25);
   expect(ex.weight_change.by).toBe('client');
-  expect(ex.feel).toBe('easy');
 });
 
 test('без связи подход сохраняется позже', async () => {
@@ -159,6 +160,28 @@ test('Настя видит флажки и правку веса', async () => 
   await expect(p.getByText('Оставили новый вес.')).toBeVisible();
   const { data } = await db.from('workout_exercises').select('weight_change').eq('client_id', clientId).eq('name', 'Присед со штангой').single();
   expect(data.weight_change).toBe(null);
+});
+
+test('заметку Насти видит только она', async () => {
+  const p = coachPage;
+  await p.goto(`/#/client/${clientId}/edit`);
+  await expect(p.getByLabel('ИМЯ И ФАМИЛИЯ')).toHaveValue('ТЕСТ Клиентка');
+  await p.getByLabel('ЗАМЕТКА ДЛЯ СЕБЯ').fill('ТЕСТ заметка для себя');
+  await p.getByRole('button', { name: 'Сохранить', exact: true }).click();
+  await expect(p.getByText('ТЕСТ заметка для себя')).toBeVisible();
+  const { data: cn } = await db.from('coach_notes').select('note').eq('client_id', clientId).single();
+  expect(cn.note).toBe('ТЕСТ заметка для себя');
+
+  const token = await tokenOf(clientPage);
+  expect((await rest(token, 'coach_notes')).body).toEqual([]);
+  expect((await rest(token, `profiles?id=eq.${clientId}&select=note`)).body).toEqual([{ note: null }]);
+
+  // Старое поле не хранит текст: всё, что в него пишут, переезжает в coach_notes.
+  await db.from('profiles').update({ note: 'ТЕСТ через старое поле' }).eq('id', clientId);
+  const { data: pr } = await db.from('profiles').select('note').eq('id', clientId).single();
+  expect(pr.note).toBe(null);
+  const { data: cn2 } = await db.from('coach_notes').select('note').eq('client_id', clientId).single();
+  expect(cn2.note).toBe('ТЕСТ через старое поле');
 });
 
 test('чужие данные недоступны', async () => {

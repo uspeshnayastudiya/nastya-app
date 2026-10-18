@@ -332,8 +332,16 @@ export async function coachShift() {
   };
 }
 
+// Заметка тренера живёт в coach_notes (клиентке недоступна); в интерфейсе она по-прежнему c.note.
+const WITH_NOTE = '*, coach_notes(note)';
+function withNote(p) {
+  const { coach_notes: cn, ...rest } = p;
+  const n = Array.isArray(cn) ? cn[0] : cn;
+  return { ...rest, note: n?.note ?? null };
+}
+
 export async function coachClients() {
-  return must(await supabase.from('profiles').select('*').eq('role', 'client').order('full_name'));
+  return must(await supabase.from('profiles').select(WITH_NOTE).eq('role', 'client').order('full_name')).map(withNote);
 }
 
 export async function createClient(profile) {
@@ -349,7 +357,11 @@ export async function deleteClientForever(id) {
 }
 
 export async function updateProfile(id, values) {
-  return must(await supabase.from('profiles').update(values).eq('id', id).select().single());
+  const { note, ...rest } = values;
+  if (note !== undefined) {
+    must(await supabase.from('coach_notes').upsert({ client_id: id, note, updated_at: new Date().toISOString() }));
+  }
+  return withNote(must(await supabase.from('profiles').update(rest).eq('id', id).select(WITH_NOTE).single()));
 }
 
 export async function markPaid(id, amount) {
@@ -359,7 +371,7 @@ export async function markPaid(id, amount) {
 export async function clientCard(id) {
   const t = today();
   const [p, ci, cyc, ex, logs, ms, extras, fdays, pays] = await Promise.all([
-    supabase.from('profiles').select('*').eq('id', id).single(),
+    supabase.from('profiles').select(WITH_NOTE).eq('id', id).single(),
     supabase.from('checkins').select('*').eq('client_id', id).gte('date', addDays(t, -13)),
     supabase.from('cycle_days').select('date, flow').eq('client_id', id).gte('date', addDays(t, -200)),
     supabase.from('workout_exercises').select('id, name, weight, per_hand, unit, workouts!inner(date, status)').eq('client_id', id).eq('workouts.status', 'done'),
@@ -370,7 +382,7 @@ export async function clientCard(id) {
     supabase.from('payments').select('*').eq('client_id', id).order('paid_at', { ascending: false }).limit(6),
   ]);
   return {
-    profile: must(p),
+    profile: withNote(must(p)),
     checkins: must(ci),
     cycle: must(cyc),
     lifts: liftSeries(must(ex), must(logs)),
